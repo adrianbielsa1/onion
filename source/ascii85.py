@@ -24,7 +24,7 @@ def encode(text: str):
                 int(block // (85 ** 0)) % 85
             ]
 
-            # Convert these digits into ASCII characters.
+            # Convert these digits into ASCII characters between 33 and 117.
             characters  = [ chr(digit + 33) for digit in digits ]
         else:
             # The five character string "!!!!!" should be encoded as "z", reducing the amount of
