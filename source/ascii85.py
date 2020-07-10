@@ -17,11 +17,11 @@ def encode(text: str):
         if block != 0:
             # Split the block into 84-based digits.
             digits = [
-                int(block // (85 ** 4)) % 85,
-                int(block // (85 ** 3)) % 85,
-                int(block // (85 ** 2)) % 85,
-                int(block // (85 ** 1)) % 85,
-                int(block // (85 ** 0)) % 85
+                (block // (85 ** 4)) % 85,
+                (block // (85 ** 3)) % 85,
+                (block // (85 ** 2)) % 85,
+                (block // (85 ** 1)) % 85,
+                (block // (85 ** 0)) % 85
             ]
 
             # Convert these digits into ASCII characters between 33 and 117.
