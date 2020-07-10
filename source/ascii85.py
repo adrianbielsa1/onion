@@ -41,3 +41,54 @@ def encode(text: str):
     result += "~>"
 
     return result
+
+# Converts "text" into its actual, non ASCII-85 value.
+def decode(text: str):
+    # Strip leading and trailing symbols (<~ and ~>).
+    text        = text[2 : len(text) - 2]
+
+    # Add padding characters.
+    padding     = (-len(text)) % 5
+    text        += "u" * padding
+
+    result      = ""
+    characters  = ""
+    index       = 0
+
+    while index < len(text):
+        if text[index].isspace():
+            # Skip whitespace.
+            index   += 1
+        elif text[index] == "z":
+            # The "z" character was originally a 4-null-characters block.
+            result  += b"\0" * 4
+            index   += 1
+        else:
+            characters  = characters + text[index]
+
+            if len(characters) == 5:
+                digits      = [ ord(character) - 33 for character in characters]
+                digits      = [
+                    digits[0] * (85 ** 4),
+                    digits[1] * (85 ** 3),
+                    digits[2] * (85 ** 2),
+                    digits[3] * (85 ** 1),
+                    digits[4] * (85 ** 0)
+                ]
+
+                block = int.from_bytes([0, 0, 0, 0], "big")
+
+                for digit in digits:
+                    block += digit
+
+                for b in block.to_bytes(4, "big"):
+                    result += chr(b)
+
+                characters = ""
+
+            index += 1
+
+    # Trim the padding characters.
+    result = result[0 : len(result) - padding]
+
+    return result
