@@ -23,14 +23,14 @@ class TestASCII85(unittest.TestCase):
 
     def test_encode(self):
         for phrase in self.phrases_to_encode:
-            actual      = ascii85.encode(phrase).encode("utf-8")
-            expected    = base64.a85encode(phrase.encode("utf-8"), adobe = True)
+            actual = ascii85.encode(phrase).encode("utf-8")
+            expected = base64.a85encode(phrase.encode("utf-8"), adobe = True)
 
             self.assertEqual(actual, expected)
 
     def test_decode(self):
         for phrase in self.phrases_to_decode:
-            actual      = ascii85.decode(phrase).encode("utf-8")
-            expected    = base64.a85decode(phrase.encode("utf-8"), adobe = True)
+            actual = ascii85.decode(phrase).encode("utf-8")
+            expected = base64.a85decode(phrase.encode("utf-8"), adobe = True)
 
             self.assertEqual(actual, expected)
