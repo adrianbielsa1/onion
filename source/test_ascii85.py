@@ -23,8 +23,10 @@ class TestASCII85(unittest.TestCase):
 
     def test_encode(self):
         for phrase in self.phrases_to_encode:
-            actual = ascii85.encode(phrase).encode("utf-8")
-            expected = base64.a85encode(phrase.encode("utf-8"), adobe = True)
+            phrase = phrase.encode("utf-8")
+
+            actual = ascii85.encode(phrase)
+            expected = base64.a85encode(phrase, adobe = True)
 
             self.assertEqual(actual, expected)
 
