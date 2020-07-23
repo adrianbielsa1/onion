@@ -3,7 +3,7 @@ __pows_of_85 = [1, 85, 7225, 614125, 52200625]
 # Converts an ASCII-based bytestream into its ASCII85-based representation,
 # using Adobe's guidelines.
 def encode(byte_data: bytes):
-    # Calculate padding bytes required.
+    # Calculate padding bytes required (must be a multiple of 4).
     padding = (-len(byte_data) % 4)
 
     # Duplicate the data and add padding null-characters at the end. Duplication is
