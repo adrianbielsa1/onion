@@ -1,46 +1,43 @@
-# Converts "text" into its ASCII85 Adobe-flavoured representation.
-def encode(text: str):
-    # Add padding characters and convert the string into a bytearray.
-    padding     = (-len(text)) % 4
-    text        = text.encode("utf-8")
-    text        += b"\0" * padding
+__pows_of_85 = [1, 85, 7225, 614125, 52200625]
 
-    result      = "<~"
-    characters  = []
-    index       = 0
+# Converts an ASCII-based bytestream into its ASCII85-based representation,
+# using Adobe's guidelines.
+def encode(byte_data: bytes):
+    # Calculate padding bytes required.
+    padding = (-len(byte_data) % 4)
 
-    while index < len(text):
-        # Blocks are 4-bytes long integers.
-        # NOTE: I'm not sure how Python represents this internally. It may use more than 4 bytes.
-        block = int.from_bytes(text[index : index + 4], "big")
+    # Duplicate the data and add padding null-characters at the end. Duplication is
+    # implicit since "bytes" objects are immutable.
+    byte_data += b"\0" * padding
 
-        if block != 0:
-            # Split the block into 84-based digits.
-            digits = [
-                (block // (85 ** 4)) % 85,
-                (block // (85 ** 3)) % 85,
-                (block // (85 ** 2)) % 85,
-                (block // (85 ** 1)) % 85,
-                (block // (85 ** 0)) % 85
-            ]
+    # Prepare the resulting buffer and add leading guard.
+    byte_result = bytearray(b"<~")
 
-            # Convert these digits into ASCII characters between 33 and 117.
-            characters  = [ chr(digit + 33) for digit in digits ]
+    # Loop through the data in blocks of 4 bytes.
+    for i in range(0, len(byte_data), 4):
+        # Convert the 4-byte block into a number. This *SHOULD* be 32 bits long if
+        # Python doesn't represent it differently.
+        numeric_block = int.from_bytes(byte_data[i : i + 4], "big")
+
+        if numeric_block != 0:
+            # Non-zero blocks are stored as 5 characters long strings.
+            for j in range(0, 5):
+                # Convert each byte in the numeric block into a base 84 digit.
+                base_84_digit = (numeric_block // __pows_of_85[4 - j]) % 85
+
+                # Convert said digit into an ASCII character ordinal between "!" and "u",
+                # and store it.
+                byte_result.append(base_84_digit + 33)
         else:
-            # The five character string "!!!!!" should be encoded as "z", reducing the amount of
-            # space used (data compression).
-            characters = [ "z" ]
+            # A zero-block would be represented by the 5-characters string "!!!!!",
+            # however, for the sake of compression, the "z" character is used instead.
+            byte_result.append(122) # ord("z")
 
-        for c in characters:
-            result += str(c)
+    # Ignore padding characters and add trailing guard.
+    byte_result = byte_result[0 : len(byte_result) - padding]
+    byte_result += b"~>"
 
-        index += 4
-
-    # Trim the padding characters and add a "~>" symbol at the end.
-    result = result[0 : len(result) - padding]
-    result += "~>"
-
-    return result
+    return byte_result
 
 # Converts "text" into its actual, non ASCII-85 value.
 def decode(text: str):
