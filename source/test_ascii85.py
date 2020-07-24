@@ -2,10 +2,6 @@ import ascii85
 import base64
 import unittest
 
-# NOTE: I use the standard module "base64" to test against my own implementation. Since "base64"
-# works on "bytes" objects, while my implementation uses "str" (string) objects. Proper str.encode()
-# calls have been added to circumvent this difference.
-
 class TestASCII85(unittest.TestCase):
 
     def setUp(self):
