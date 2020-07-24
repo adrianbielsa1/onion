@@ -32,7 +32,9 @@ class TestASCII85(unittest.TestCase):
 
     def test_decode(self):
         for phrase in self.phrases_to_decode:
-            actual = ascii85.decode(phrase).encode("utf-8")
-            expected = base64.a85decode(phrase.encode("utf-8"), adobe = True)
+            phrase = phrase.encode("utf-8")
+
+            actual = ascii85.decode(phrase)
+            expected = base64.a85decode(phrase, adobe = True)
 
             self.assertEqual(actual, expected)
