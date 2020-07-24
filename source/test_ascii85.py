@@ -2,6 +2,8 @@ import ascii85
 import base64
 import unittest
 
+# NOTE: Proper str.encode() calls have been added to convert "str" objects into "bytes" objects.
+
 class TestASCII85(unittest.TestCase):
 
     def setUp(self):
