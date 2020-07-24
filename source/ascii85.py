@@ -39,53 +39,54 @@ def encode(byte_data: bytes):
 
     return byte_result
 
-# Converts "text" into its actual, non ASCII-85 value.
-def decode(text: str):
-    # Strip leading and trailing symbols (<~ and ~>).
-    text        = text[2 : len(text) - 2]
+# Converts an ASCII85-based bytestream into its ASCII representation, using
+# Adobe's guidelines.
+def decode(byte_data: bytes):
+    # TODO: See if this makes a copy, or simply moves a pointer ("bytes" objects are
+    # immutable).
+    # Remove leading (<~) and trailing (~>) guards.
+    byte_data = byte_data[2 : len(byte_data) - 2]
 
-    # Add padding characters.
-    padding     = (-len(text)) % 5
-    text        += "u" * padding
+    # Calculate padding bytes required (must be a multiple of 5).
+    padding = (-len(byte_data) % 5)
 
-    result      = ""
-    characters  = ""
-    index       = 0
+    # Duplicate the data and add padding "u" characters at the end. Duplication is
+    # implicit since "bytes" objects are immutable.
+    byte_data += b"u" * padding
 
-    while index < len(text):
-        if text[index].isspace():
-            # Skip whitespace.
-            index   += 1
-        elif text[index] == "z":
-            # The "z" character was originally a 4-null-characters block.
-            result  += b"\0" * 4
-            index   += 1
+    # Prepare the resulting buffer.
+    byte_result = bytearray()
+
+    # Blocks are made of 5 non-consecutive, non-z and non-whitespace characters.
+    numeric_block = 0
+    numeric_block_length = 0
+
+    # Analyze each ASCII character.
+    for c in byte_data:
+        if c == ord("z"): # c == 122:
+            # The "z" character was originally a 4 null characters block.
+            byte_result.append(b"\0\0\0\0")
+        elif ord("!") <= c <= ord("u"): # 33 <= c <= 117:
+            # Restore the original ASCII range (0 - 84 instead of 33 - 117) by subtracting
+            # 33 and undo base 84 conversion using multiplication by a power of 85.
+            c -= 33
+            c *= __pows_of_85[4 - numeric_block_length]
+
+            # Re-encode the character inside a 32-bit integer.
+            numeric_block += c
+            numeric_block_length += 1
+
+            # The block is complete.
+            if numeric_block_length == 5:
+                # Split each byte from the 4 that make up the block.
+                byte_result += numeric_block.to_bytes(4, "big")
+
+                # Reset.
+                numeric_block = 0
+                numeric_block_length = 0
         else:
-            characters  = characters + text[index]
+            # Other characters are ignored.
+            pass
 
-            if len(characters) == 5:
-                digits      = [ ord(character) - 33 for character in characters]
-                digits      = [
-                    digits[0] * (85 ** 4),
-                    digits[1] * (85 ** 3),
-                    digits[2] * (85 ** 2),
-                    digits[3] * (85 ** 1),
-                    digits[4] * (85 ** 0)
-                ]
-
-                block = int.from_bytes([0, 0, 0, 0], "big")
-
-                for digit in digits:
-                    block += digit
-
-                for b in block.to_bytes(4, "big"):
-                    result += chr(b)
-
-                characters = ""
-
-            index += 1
-
-    # Trim the padding characters.
-    result = result[0 : len(result) - padding]
-
-    return result
+    # Trim padding characters.
+    return byte_result[0 : len(byte_result) - padding]
