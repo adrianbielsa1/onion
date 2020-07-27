@@ -32,3 +32,13 @@
 key = bytes([108, 36, 132, 142, 66, 25, 168, 225, 197, 219, 87,
              101, 185, 198, 20, 158, 165, 25, 53, 150, 59, 57,
              127, 165, 101, 209, 254, 1, 133, 125, 217, 76])
+
+def decode(byte_data: bytes):
+    byte_result = bytearray()
+    count = 0
+
+    for b in byte_data:
+        byte_result.append(b ^ key[count % 32])
+        count += 1
+
+    return byte_result
